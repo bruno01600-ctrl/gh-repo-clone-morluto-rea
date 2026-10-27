@@ -204,7 +204,25 @@ needs its video CDN and Amazon's push service: answer yes to Prime in
 Fire OS 6 syncs its clock over the active network, which is the DNS-only VPN.
 `SYSTEM_DNS=1` in `dumbtv.conf` lets system apps bypass the filter so the clock
 syncs. Every app running as the system user then bypasses it too, so it is off by
-default and ignored on Fire OS 7 and 8, which keep their clock anyway.
+default and ignored on Fire OS 7 and 8, which usually keep their clock anyway.
+
+### The clock is wrong on Fire OS 8
+
+Seen on a Fire TV Stick 4K Max, 2nd gen (AFTKRT) with the filter on: the home screen
+showed a time and date more than two weeks off, so the clock had stopped syncing, not
+just the time zone. Pointing the time sync at a public NTP pool and toggling automatic
+time fixed it at once:
+
+```sh
+adb shell settings put global ntp_server fr.pool.ntp.org   # or pool.ntp.org, or your country's pool
+adb shell settings put global auto_time 0
+adb shell settings put global auto_time 1
+```
+
+Which host the stock setting used, and whether the filter or a disabled package
+blocked it, was not recorded; `settings get global ntp_server` before the change
+would tell. A clock that is right but off by whole hours is the time zone instead:
+Settings > Preferences > Time Zone.
 
 ### The VPN consent box is stuck on screen
 
