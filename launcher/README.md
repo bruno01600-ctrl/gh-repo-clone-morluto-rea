@@ -32,6 +32,11 @@ refuses it if the checksum differs from the one in `version.env`. Installing the
 APK by hand works, but HOME only switches over once `install.sh` (or
 `scripts/launcher.sh`) has set up the HOME hook described below.
 
+An APK built elsewhere, such as the `dumbtv-home-apk` artifact every CI run keeps,
+installs with `./launcher/install.sh --apk dumbtv-home.apk`. Each run signs it with
+a key of its own, so one such build cannot update another: `adb uninstall
+tv.dumbtv.home` first.
+
 Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 
 ## Using it

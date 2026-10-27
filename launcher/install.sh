@@ -2,6 +2,7 @@
 # Installs dumbtv home on the TV and gives it the HOME button.
 #   ./launcher/install.sh            download the release APK (checksum-verified), install, take over HOME
 #   ./launcher/install.sh --build    build from source instead (needs a JDK and the Android SDK)
+#   ./launcher/install.sh --apk FILE install an APK built elsewhere (CI's dumbtv-home-apk artifact)
 #   ./launcher/install.sh --undo     hand HOME back to Amazon's launcher
 # Pick the device with ADB_SERIAL when more than one is connected.
 set -euo pipefail
@@ -26,9 +27,15 @@ mode=release
 case ${1:-} in
   "") ;;
   --build) mode=build ;;
+  # The cd above moved away from where the command was run: resolve a relative path there.
+  --apk) mode=apk; APK=${2:-}; [[ -z $APK || $APK == /* ]] || APK=$OLDPWD/$APK ;;
   --undo) mode=undo ;;
-  *) echo "usage: $0 [--build | --undo]" >&2; exit 2 ;;
+  *) echo "usage: $0 [--build | --apk FILE | --undo]" >&2; exit 2 ;;
 esac
+if [[ $mode == apk && ! -f $APK ]]; then
+  echo "error: no APK at '$APK'" >&2
+  exit 2
+fi
 
 command -v "$ADB" >/dev/null || { echo "error: adb not found — install Android platform-tools" >&2; exit 1; }
 state=$(adb_ get-state 2>/dev/null || true)
@@ -98,6 +105,8 @@ install_apk() {
 
 if [[ $mode == build ]]; then
   build_apk
+elif [[ $mode == apk ]]; then
+  echo "installing $APK (not checked against the release: it is a build of your own)"
 else
   mkdir -p build
   APK=build/dumbtv-home-$VERSION.apk
@@ -128,6 +137,8 @@ case $out in
     echo "error: the installed dumbtv home was signed with a different key (release vs your own build)." >&2
     if [[ $mode == release ]]; then
       echo "  it is probably your own build: run ./launcher/install.sh --build instead" >&2
+    elif [[ $mode == apk ]]; then
+      echo "  every CI build has its own key, so a later one cannot update an earlier one either." >&2
     else
       echo "  it is probably the release: this build's key cannot update it." >&2
     fi
