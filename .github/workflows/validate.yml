@@ -26,8 +26,19 @@ jobs:
       - name: sdk
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0" >/dev/null
       - name: build (sdk 25 for fire os 6-8; fails on any android.* API that Android 7.1 lacks)
-        run: ./launcher/build.sh
-      - name: keep the apk (signed with a key made for this run, not the release key)
+        env:
+          # A PKCS12 keystore, base64, password dumbtvhome unless DUMBTV_KEYPASS says otherwise.
+          # With it every build is signed with the same key and installs over the last one,
+          # keeping its settings; without it (a fork), build.sh makes a throwaway key.
+          KEYSTORE_B64: ${{ secrets.DUMBTV_KEYSTORE_B64 }}
+          KEYPASS: ${{ secrets.DUMBTV_KEYPASS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ci.p12"
+            export DUMBTV_KEYSTORE="$RUNNER_TEMP/ci.p12" DUMBTV_KEYPASS="${KEYPASS:-dumbtvhome}"
+          fi
+          ./launcher/build.sh
+      - name: keep the apk (signed with the DUMBTV_KEYSTORE_B64 key or a throwaway one; never the release key)
         uses: actions/upload-artifact@v4
         with:
           name: dumbtv-home-apk

@@ -35,7 +35,15 @@ APK by hand works, but HOME only switches over once `install.sh` (or
 An APK built elsewhere, such as the `dumbtv-home-apk` artifact every CI run keeps,
 installs with `./launcher/install.sh --apk dumbtv-home.apk`. Each run signs it with
 a key of its own, so one such build cannot update another: `adb uninstall
-tv.dumbtv.home` first.
+tv.dumbtv.home` first. To sign every build with the same key instead, so each installs
+over the last with its settings kept, store a PKCS12 keystore as the repository secret
+`DUMBTV_KEYSTORE_B64` (base64; password `dumbtvhome`, or set `DUMBTV_KEYPASS`):
+
+```sh
+openssl req -x509 -newkey rsa:2048 -nodes -days 10000 -subj "/CN=dumbtv home" -keyout k.pem -out c.pem
+openssl pkcs12 -export -inkey k.pem -in c.pem -name home -passout pass:dumbtvhome -out ci.p12
+base64 -w0 ci.p12    # the secret's value; keep ci.p12, delete k.pem
+```
 
 Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 
