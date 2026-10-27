@@ -81,6 +81,11 @@ Same shell, same `pm disable-user`, different targets.
 - Fire OS settings keys (`amz_limit_ad_tracking` and friends) do nothing here.
 - A few China-market TCL sets refuse to install any third-party launcher at all.
 
+`scripts/googletv.sh dumbtv-home.apk [wallpaper.jpg]` does the Google TV steps above in
+one pass: the active entries of `data/androidtv/packages.txt`, Private DNS (AdGuard by
+default, `DNS_HOST=` to change it), dumbtv home with `setupwraith` disabled before
+`launcherx`, and the wallpaper. `--undo` reverses it. Not yet run on a Chromecast.
+
 `data/androidtv/packages.txt` has the first entries verified on real hardware (an
 onn 4K Pro and a Philips 24NA), and `catalog/devices/androidtv-*.yaml` records
 nine devices. No script applies them yet: `debloat.sh` refuses anything that is
