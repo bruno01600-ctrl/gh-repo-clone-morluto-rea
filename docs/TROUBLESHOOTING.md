@@ -208,20 +208,22 @@ default and ignored on Fire OS 7 and 8, which usually keep their clock anyway.
 
 ### The clock is wrong on Fire OS 8
 
-Seen on a Fire TV Stick 4K Max, 2nd gen (AFTKRT) with the filter on: the home screen
-showed a time and date more than two weeks off, so the clock had stopped syncing, not
-just the time zone. Pointing the time sync at a public NTP pool and toggling automatic
-time fixed it at once:
+Seen on a Fire TV Stick 4K Max, 2nd gen (AFTKRT) shortly after the full pass and its
+reboots, with the filter on: the home screen showed a time and date more than two
+weeks off. It corrected itself a few minutes later with nothing changed, so the first
+thing to do is wait.
+
+If it stays wrong, point the time sync at a public NTP pool and toggle automatic
+time (untested so far, since this case fixed itself):
 
 ```sh
+adb shell settings get global ntp_server                   # note it, in case the filter blocks it
 adb shell settings put global ntp_server fr.pool.ntp.org   # or pool.ntp.org, or your country's pool
 adb shell settings put global auto_time 0
 adb shell settings put global auto_time 1
 ```
 
-Which host the stock setting used, and whether the filter or a disabled package
-blocked it, was not recorded; `settings get global ntp_server` before the change
-would tell. A clock that is right but off by whole hours is the time zone instead:
+A clock that is right but off by whole hours is the time zone instead:
 Settings > Preferences > Time Zone.
 
 ### The VPN consent box is stuck on screen
