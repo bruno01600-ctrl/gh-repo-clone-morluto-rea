@@ -63,6 +63,8 @@ public final class Home extends Activity {
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     private boolean resumed, landed, unlockOpened;
+    /** HOME arrived while the screen was not in front: land on the first tile once it is. */
+    private boolean toFirst;
     private Row lastFocusedRow;
     private FrameLayout root;
     private LinearLayout column;
@@ -250,6 +252,10 @@ public final class Home extends Activity {
         if (cfg.version() != applied) apply();
         else background();
         refreshRecent();
+        if (toFirst) {
+            toFirst = false;
+            focusFirst();
+        }
         IntentFilter f = new IntentFilter(Intent.ACTION_TIME_TICK);
         f.addAction(Intent.ACTION_TIME_CHANGED);
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -302,7 +308,11 @@ public final class Home extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (moving != null) stopMoving();
+        // HOME, from an app or on this screen, starts over at the first tile as stock launchers
+        // do. Android may pause the activity before delivering the intent (Google TV does), so
+        // when it is not in front the focus moves in onResume instead.
         if (resumed) focusFirst();
+        else toFirst = true;
     }
 
     @Override

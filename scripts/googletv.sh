@@ -66,9 +66,21 @@ note "private_dns_mode=$(dev1 settings get global private_dns_mode) specifier=$(
 step "dumbtv home"
 note "if the TV shows a Play Protect warning, answer it on the remote; if it only offers 'Got it',"
 note "turn off Play Store > profile > Play Protect > gear > Scan apps, run this again, then turn it back on"
-out=$("$ADB" -s "$SERIAL" install -r "$APK" 2>&1 | grep -m1 -E 'Success|Failure|failed' || true)
+install_apk() { "$ADB" -s "$SERIAL" install -r "$APK" 2>&1 | grep -m1 -E 'Success|Failure|failed' || true; }
+out=$(install_apk)
+if [[ $out == *INSTALL_FAILED_UPDATE_INCOMPATIBLE* ]]; then
+  # Every CI build has its own signing key, so a new one cannot update the last. Replacing
+  # it loses its settings: the wallpaper argument and scripts/categories.sh put them back.
+  note "the installed dumbtv home has another signing key: replacing it"
+  dev "pm uninstall $PKG" >/dev/null
+  out=$(install_apk)
+fi
 note "${out:-no answer from adb install}"
-dev "pm path $PKG" | grep -q '^package:' || die "dumbtv home is not installed, so Google TV's home stays on"
+if ! dev "pm path $PKG" | grep -q '^package:'; then
+  # Never leave the TV with no home screen: the stock one may be disabled from an earlier run.
+  for p in $STOCK_HOME; do dev "pm enable --user 0 $p" >/dev/null 2>&1; done
+  die "dumbtv home is not installed, so Google TV's home stays on"
+fi
 for p in $STOCK_HOME; do
   dev "pm path $p" | grep -q '^package:' || continue
   printf '  %-48s %s\n' "$p" "$(dev1 "pm disable-user --user 0 $p")"
