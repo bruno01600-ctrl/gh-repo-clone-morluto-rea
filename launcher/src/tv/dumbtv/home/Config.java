@@ -270,6 +270,15 @@ final class Config {
         set(key, TextUtils.join(",", items));
     }
 
+    /** The keys that start with {@code prefix}, copied so the caller may change them. */
+    List<String> keys(String prefix) {
+        List<String> out = new ArrayList<>();
+        for (String k : values.keySet()) {
+            if (k.startsWith(prefix)) out.add(k);
+        }
+        return out;
+    }
+
     void removePrefix(String... prefixes) {
         for (Iterator<String> it = values.keySet().iterator(); it.hasNext(); ) {
             String k = it.next();

@@ -39,7 +39,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Remote | Does |
 |---|---|
 | OK | open the app, or switch to the input |
-| Hold OK, or ☰ Menu | Move, Rename, Hide, App info |
+| Hold OK, or ☰ Menu | Move, Rename, Category, Hide, App info |
 | With Child lock on: hold ☰ Menu for 3 s | Options |
 | Move mode | ◀ ▶ moves the tile, ▲ ▼ moves it a line in the grid, any other key drops it |
 | Up from the top row | Options and Settings |
@@ -66,8 +66,9 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Child lock | off, on: hides Options and Settings and turns off Hold OK and ☰ Menu on tiles, so the home screen only opens apps and inputs (see below) |
 | App tile style | original (default), Afterglow: uppercase names inside the tile, a brand-color fade into black, a grayscale installed app icon in the corner, and a thin focus border |
 
-Below them: Next wallpaper, which apps and inputs appear on the home screen, a
-reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
+Below them: Next wallpaper, which apps and inputs appear on the home screen,
+Categories, a reset for order, names and hidden tiles, and **Open Amazon's home
+screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.
 
 **Afterglow** changes app tiles only, in both rows and grid layouts. Select it in
@@ -82,6 +83,18 @@ separate choices.
 | Grid layout | Adaptive background | Adaptive tint |
 |---|---|---|
 | ![Grid layout](../docs/assets/screens/grid.png) | ![Adaptive background](../docs/assets/screens/adaptive.png) | ![Adaptive tint](../docs/assets/screens/tint.png) |
+
+## Categories
+
+Each category is a row of its own, between Apps and Inputs. **Options › Categories ›
+New category** creates one; then hold OK on an app (or press ☰ Menu) and pick
+**Category** to file it there, or **New category…** to create one on the spot.
+**Apps (no category)** puts it back in the Apps row. A row with no apps in it does
+not show.
+
+Pick a category in **Options › Categories** to rename it, move its row up or down,
+or delete it; deleting one sends its apps back to the Apps row. Move, Rename and
+Hide work in a category row as in Apps, and App order applies to every row.
 
 ## HDMI inputs
 
@@ -150,6 +163,9 @@ rotate=off
 # off on
 lock=off
 apps.order=com.amazon.firetv.youtube,org.videolan.vlc
+# category rows, top to bottom (no commas in a name), and the apps filed under each
+categories=Films,Music
+category.org.videolan.vlc=Films
 apps.hide=org.videolan.vlc
 apps.show=com.amazon.venezia
 inputs.hide=com.droidlogic.tvinput/.services.AV1InputService/HW1

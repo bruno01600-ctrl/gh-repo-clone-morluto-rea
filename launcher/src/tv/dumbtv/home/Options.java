@@ -56,6 +56,7 @@ public final class Options extends Activity {
         list.addView(gap());
         list.addView(action("Apps on home screen", () -> pick(Catalog.APPS)));
         list.addView(action("Inputs on home screen", () -> pick(Catalog.INPUTS)));
+        list.addView(action("Categories", this::categories));
         list.addView(action("Reset order, names and hidden tiles", this::reset));
         list.addView(action("Open Amazon's home screen", () -> {
             Guard.amazon(this);
@@ -201,6 +202,63 @@ public final class Options extends Activity {
                         Catalog.setShown(cfg, kind, items.get(which), checked))
                 .setPositiveButton("Done", null)
                 .show();
+    }
+
+    /** The categories, each a row of apps on the home screen; apps are filed from their menu. */
+    private void categories() {
+        List<String> names = Catalog.categories(cfg);
+        List<String> items = new ArrayList<>(names);
+        items.add("New category…");
+        new AlertDialog.Builder(this, Ui.DIALOG)
+                .setTitle("Categories")
+                .setItems(items.toArray(new CharSequence[0]), (d, which) -> {
+                    if (which < names.size()) {
+                        category(names.get(which));
+                        return;
+                    }
+                    Ui.ask(this, "New category", "", raw -> {
+                        if (Catalog.addCategory(cfg, Catalog.categoryName(raw))) {
+                            Toast.makeText(this, "Added. On the home screen, hold OK on an app "
+                                    + "and pick Category to put it there.", Toast.LENGTH_LONG).show();
+                        } else {
+                            taken();
+                        }
+                        categories();
+                    });
+                })
+                .setPositiveButton("Done", null)
+                .show();
+    }
+
+    private void category(String name) {
+        new AlertDialog.Builder(this, Ui.DIALOG)
+                .setTitle(name)
+                .setItems(new CharSequence[] {"Rename", "Move up", "Move down", "Delete"}, (d, which) -> {
+                    switch (which) {
+                        case 0:
+                            Ui.ask(this, "Rename", name, raw -> {
+                                String to = Catalog.categoryName(raw);
+                                if (!to.equals(name) && !Catalog.renameCategory(cfg, name, to)) taken();
+                                categories();
+                            });
+                            return;
+                        case 1:
+                            Catalog.moveCategory(cfg, name, -1);
+                            break;
+                        case 2:
+                            Catalog.moveCategory(cfg, name, 1);
+                            break;
+                        default:
+                            Catalog.deleteCategory(cfg, name);
+                            Toast.makeText(this, "Deleted. Its apps are back in Apps.", Toast.LENGTH_SHORT).show();
+                    }
+                    categories();
+                })
+                .show();
+    }
+
+    private void taken() {
+        Toast.makeText(this, "That name is empty or already used.", Toast.LENGTH_SHORT).show();
     }
 
     private void reset() {

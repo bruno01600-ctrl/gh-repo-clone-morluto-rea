@@ -128,6 +128,68 @@ final class Catalog {
         return i < 0 ? Integer.MAX_VALUE : i;
     }
 
+    /** The user's categories, in row order. Each is a row of apps under the Apps row. */
+    static List<String> categories(Config cfg) {
+        return cfg.list("categories");
+    }
+
+    /** The category {@code it} is filed under, or null for the Apps row. */
+    static String category(Config cfg, Item it) {
+        String c = cfg.get("category." + it.id, "");
+        return categories(cfg).contains(c) ? c : null;
+    }
+
+    /** Files {@code it} under {@code category}, or back in the Apps row when it is null. */
+    static void setCategory(Config cfg, Item it, String category) {
+        cfg.set("category." + it.id, category);
+    }
+
+    /** A name the comma-separated list can hold; empty when nothing usable is left. */
+    static String categoryName(String raw) {
+        return raw.replace(',', ' ').replaceAll("\\s+", " ").trim();
+    }
+
+    /** Adds a category at the end; false when the name is empty or already taken. */
+    static boolean addCategory(Config cfg, String name) {
+        List<String> all = categories(cfg);
+        if (name.isEmpty() || all.contains(name)) return false;
+        all.add(name);
+        cfg.setList("categories", all);
+        return true;
+    }
+
+    /** Renames a category and moves its apps along; false when the new name is unusable. */
+    static boolean renameCategory(Config cfg, String from, String to) {
+        List<String> all = categories(cfg);
+        int i = all.indexOf(from);
+        if (i < 0 || to.isEmpty() || all.contains(to)) return false;
+        all.set(i, to);
+        cfg.setList("categories", all);
+        for (String key : cfg.keys("category.")) {
+            if (from.equals(cfg.get(key, ""))) cfg.set(key, to);
+        }
+        return true;
+    }
+
+    /** Removes a category; its apps go back to the Apps row. */
+    static void deleteCategory(Config cfg, String name) {
+        List<String> all = categories(cfg);
+        all.remove(name);
+        cfg.setList("categories", all);
+        for (String key : cfg.keys("category.")) {
+            if (name.equals(cfg.get(key, ""))) cfg.set(key, null);
+        }
+    }
+
+    /** Moves a category one row up (by -1) or down (by 1). */
+    static void moveCategory(Config cfg, String name, int by) {
+        List<String> all = categories(cfg);
+        int from = all.indexOf(name), to = from + by;
+        if (from < 0 || to < 0 || to >= all.size()) return;
+        Collections.swap(all, from, to);
+        cfg.setList("categories", all);
+    }
+
     /** Saves {@code ids} as the new order, keeping the old positions of hidden items after them. */
     static void saveOrder(Config cfg, String kind, List<String> ids) {
         List<String> order = new ArrayList<>(ids);

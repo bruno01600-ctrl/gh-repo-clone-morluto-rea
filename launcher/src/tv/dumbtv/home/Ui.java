@@ -1,5 +1,7 @@
 package tv.dumbtv.home;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -7,7 +9,12 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.util.TypedValue;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import java.util.function.Consumer;
 
 final class Ui {
     static final int TEXT = 0xFFF2F2F3;
@@ -54,5 +61,24 @@ final class Ui {
         v.setTextColor(new ColorStateList(
                 new int[][] {{android.R.attr.state_focused}, {}},
                 new int[] {ink(accent), 0xD9FFFFFF}));
+    }
+
+    /** A one-line text dialog; Save hands the trimmed text to {@code done}. */
+    static void ask(Activity a, String title, String text, Consumer<String> done) {
+        EditText field = new EditText(a);
+        field.setSingleLine();
+        field.setText(text);
+        field.setSelectAllOnFocus(true);
+        FrameLayout box = new FrameLayout(a);
+        box.setPadding(dp(a, 24), dp(a, 8), dp(a, 24), 0);
+        box.addView(field);
+        AlertDialog d = new AlertDialog.Builder(a, DIALOG)
+                .setTitle(title)
+                .setView(box)
+                .setPositiveButton("Save", (dialog, w) -> done.accept(field.getText().toString().trim()))
+                .setNegativeButton("Cancel", null)
+                .create();
+        d.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        d.show();
     }
 }

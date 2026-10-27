@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,16 +63,17 @@ public final class Home extends Activity {
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     private boolean resumed, landed, unlockOpened;
-    private String lastFocusedKind;
-    private String lastAppId;
-    private String lastInputId;
+    private Row lastFocusedRow;
     private FrameLayout root;
+    private LinearLayout column;
     private ImageView wall;
     private View shade;
     private View tint;
     private TextView clock, date;
     private Meter meter;
     private Row apps, inputs;
+    /** One row per category, between Apps and Inputs, in Options › Categories order. */
+    private final List<Row> groups = new ArrayList<>();
     private Map<String, Long> recent = new HashMap<>();
     private Tile moving;
     private String wallKey;
@@ -119,14 +121,20 @@ public final class Home extends Activity {
 
     private final class Row {
         final String kind;
+        /** The category this row shows; null for the Apps and Inputs rows. */
+        final String category;
         final TextView title;
         final HorizontalScrollView scroll;
         final LinearLayout strip;
         final Grid grid;
         List<Item> all = new ArrayList<>();
+        /** The tile focused last in this row, to come back to from the rows around it. */
+        String lastId;
 
-        Row(String kind, String name, LinearLayout parent) {
+        /** Adds the row to {@code parent} at {@code at}, or at the end when it is negative. */
+        Row(String kind, String category, String name, LinearLayout parent, int at) {
             this.kind = kind;
+            this.category = category;
             int edge = dp(56), bleed = dp(14);
             title = Ui.text(Home.this, 12, Ui.FAINT, Ui.MEDIUM);
             title.setText(name.toUpperCase(Locale.ROOT));
@@ -155,9 +163,20 @@ public final class Home extends Activity {
             scroll.addView(strip, new FrameLayout.LayoutParams(WRAP, WRAP));
             grid = new Grid(Home.this);
             grid.setPadding(edge, dp(12), edge, dp(8));
-            parent.addView(title, new LinearLayout.LayoutParams(MATCH, WRAP));
-            parent.addView(scroll, new LinearLayout.LayoutParams(MATCH, WRAP));
-            parent.addView(grid, new LinearLayout.LayoutParams(MATCH, WRAP));
+            int i = at < 0 ? parent.getChildCount() : at;
+            parent.addView(title, i, new LinearLayout.LayoutParams(MATCH, WRAP));
+            parent.addView(scroll, i + 1, new LinearLayout.LayoutParams(MATCH, WRAP));
+            parent.addView(grid, i + 2, new LinearLayout.LayoutParams(MATCH, WRAP));
+        }
+
+        void remove(ViewGroup parent) {
+            parent.removeView(title);
+            parent.removeView(scroll);
+            parent.removeView(grid);
+        }
+
+        boolean holds(View v) {
+            return v != null && (v.getParent() == strip || v.getParent() == grid);
         }
 
         /** Whichever container currently holds the tiles, following Options › Layout. */
@@ -361,7 +380,7 @@ public final class Home extends Activity {
      */
     private List<int[]> rowBlocks(View content) {
         List<int[]> rows = new ArrayList<>();
-        for (Row row : new Row[] {apps, inputs}) {
+        for (Row row : rows()) {
             if (row.scroll.getVisibility() == View.VISIBLE) {
                 rows.add(new int[] {topIn(row.title, content), topIn(row.scroll, content) + row.scroll.getHeight()});
             } else if (row.grid.getVisibility() == View.VISIBLE) {
@@ -466,14 +485,16 @@ public final class Home extends Activity {
         scroll.setClipChildren(false);
         root.addView(scroll, new FrameLayout.LayoutParams(MATCH, MATCH));
 
-        LinearLayout column = new LinearLayout(this) {
+        column = new LinearLayout(this) {
             @Override
             public View focusSearch(View focused, int direction) {
                 if (direction == View.FOCUS_DOWN && chips.contains(focused)) {
-                    View remembered = rememberedTile(lastFocusedKind);
+                    View remembered = rememberedTile(lastFocusedRow);
                     if (remembered != null) return remembered;
-                    View below = nearest(apps.tiles(), focused);
-                    if (below != null) return below;
+                    for (Row row : rows()) {
+                        View below = nearest(row.tiles(), focused);
+                        if (below != null) return below;
+                    }
                 }
                 if (focused instanceof Tile
                         && focused.getParent() instanceof ViewGroup) {
@@ -497,28 +518,20 @@ public final class Home extends Activity {
                         if (edge) return focused;
                     }
 
-                    // Down from the last line of the apps row lands on the input that was
-                    // focused last, not on whichever one happens to be closest.
-                    if (direction == View.FOCUS_DOWN
-                            && Catalog.APPS.equals(tile.kind)) {
-                        boolean hasBelow = grid && belowInGrid(parent, tile);
-                        if (!hasBelow) {
-                            View remembered = rememberedTile(Catalog.INPUTS);
-                            if (remembered != null) return remembered;
-                            View below = nearest(inputs.tiles(), focused);
-                            if (below != null) return below;
-                        }
-                    }
-                    // Up from the first line of the inputs row goes back to the app that was
-                    // focused last.
-                    if (direction == View.FOCUS_UP
-                            && Catalog.INPUTS.equals(tile.kind)) {
-                        boolean hasAbove = grid && aboveInGrid(parent, tile);
-                        if (!hasAbove) {
-                            View remembered = rememberedTile(Catalog.APPS);
-                            if (remembered != null) return remembered;
-                            View above = nearest(apps.tiles(), focused);
-                            if (above != null) return above;
+                    // Down from the last line of a row, or up from its first, lands on the tile
+                    // that was focused last in the next row with tiles, not on whichever one
+                    // happens to be closest. Up from the top row goes on to Options.
+                    boolean leaves = direction == View.FOCUS_DOWN && !(grid && belowInGrid(parent, tile))
+                            || direction == View.FOCUS_UP && !(grid && aboveInGrid(parent, tile));
+                    List<Row> all = rows();
+                    int at = all.indexOf(rowOf(tile));
+                    if (leaves && at >= 0) {
+                        int step = direction == View.FOCUS_DOWN ? 1 : -1;
+                        for (int i = at + step; i >= 0 && i < all.size(); i += step) {
+                            Row next = all.get(i);
+                            if (next.tiles().getChildCount() == 0) continue;
+                            View remembered = rememberedTile(next);
+                            return remembered != null ? remembered : nearest(next.tiles(), focused);
                         }
                     }
                 }
@@ -554,9 +567,46 @@ public final class Home extends Activity {
         head.addView(chip("Settings", v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
 
-        apps = new Row(Catalog.APPS, "Apps", column);
-        inputs = new Row(Catalog.INPUTS, "Inputs", column);
+        apps = new Row(Catalog.APPS, null, "Apps", column, -1);
+        inputs = new Row(Catalog.INPUTS, null, "Inputs", column, -1);
         return root;
+    }
+
+    /** Every row, top to bottom: Apps, the categories, Inputs. */
+    private List<Row> rows() {
+        List<Row> out = appRows();
+        out.add(inputs);
+        return out;
+    }
+
+    /** The rows that hold apps: Apps, then the categories. */
+    private List<Row> appRows() {
+        List<Row> out = new ArrayList<>();
+        out.add(apps);
+        out.addAll(groups);
+        return out;
+    }
+
+    private Row rowOf(View tile) {
+        for (Row row : rows()) {
+            if (row.holds(tile)) return row;
+        }
+        return null;
+    }
+
+    /** Rebuilds the category rows when Options › Categories changed; render fills them. */
+    private void syncGroups() {
+        List<String> names = Catalog.categories(cfg);
+        List<String> have = new ArrayList<>();
+        for (Row row : groups) have.add(row.category);
+        if (have.equals(names)) return;
+        if (moving != null && !apps.holds(moving) && !inputs.holds(moving)) stopMoving();
+        if (groups.contains(lastFocusedRow)) lastFocusedRow = null;
+        for (Row row : groups) row.remove(column);
+        groups.clear();
+        for (String name : names) {
+            groups.add(new Row(Catalog.APPS, name, name, column, column.indexOfChild(inputs.title)));
+        }
     }
 
     /** True when the grid has another line below {@code tile}. */
@@ -636,7 +686,8 @@ public final class Home extends Activity {
         }
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
-        render(apps);
+        syncGroups();
+        renderApps();
         render(inputs);
         background();
         tick();
@@ -660,9 +711,13 @@ public final class Home extends Activity {
                     }
                 }
                 apps.all = list;
-                render(apps);
+                renderApps();
             });
         });
+    }
+
+    private void renderApps() {
+        for (Row row : appRows()) render(row);
     }
 
     private void loadInputs() {
@@ -684,24 +739,29 @@ public final class Home extends Activity {
                 if (isDestroyed() || recentFor(Catalog.APPS) == null) return;
                 List<Item> before = Catalog.visible(cfg, Catalog.APPS, apps.all, recent);
                 recent = times;
-                if (!before.equals(Catalog.visible(cfg, Catalog.APPS, apps.all, recent))) render(apps);
+                if (!before.equals(Catalog.visible(cfg, Catalog.APPS, apps.all, recent))) renderApps();
             });
         });
     }
 
     private void render(Row row) {
-        if (moving != null && moving.kind.equals(row.kind)) stopMoving();
+        if (moving != null && row.holds(moving)) stopMoving();
         View focused = getCurrentFocus();
-        String keep = focused instanceof Tile && ((Tile) focused).kind.equals(row.kind)
-                ? ((Tile) focused).item.id : null;
+        String keep = focused instanceof Tile && row.holds(focused) ? ((Tile) focused).item.id : null;
         boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
         ViewGroup target = gridMode ? row.grid : row.strip;
         row.strip.removeAllViews();
         row.grid.removeAllViews();
 
         boolean enabled = !Catalog.INPUTS.equals(row.kind) || "on".equals(cfg.get(Config.INPUTS));
-        List<Item> shown = enabled ? Catalog.visible(cfg, row.kind, row.all, recentFor(row.kind))
-                : new ArrayList<>();
+        List<Item> shown = new ArrayList<>();
+        if (enabled) {
+            boolean app = Catalog.APPS.equals(row.kind);
+            // Every app row draws from the one app list; each keeps the apps of its category.
+            for (Item it : Catalog.visible(cfg, row.kind, app ? apps.all : row.all, recentFor(row.kind))) {
+                if (!app || Objects.equals(Catalog.category(cfg, it), row.category)) shown.add(it);
+            }
+        }
         int[] size = cardSize();
         int w = size[0], h = Catalog.APPS.equals(row.kind) ? size[1] : Math.round(size[1] * 0.56f);
         String labels = cfg.get(Config.LABELS);
@@ -713,12 +773,8 @@ public final class Home extends Activity {
             t.setOnFocusChangeListener((v, has) -> {
                 if (has) {
                     Tile tile = (Tile) v;
-                    lastFocusedKind = tile.kind;
-                    if (Catalog.APPS.equals(tile.kind)) {
-                        lastAppId = tile.item.id;
-                    } else {
-                        lastInputId = tile.item.id;
-                    }
+                    lastFocusedRow = row;
+                    row.lastId = tile.item.id;
                     focusBackground(tile.item);
                 }
             });
@@ -739,11 +795,8 @@ public final class Home extends Activity {
                     || "afterglow".equals(cfg.get(Config.TILE_STYLE)) && it.icon == null)) loadArt(it);
         }
         row.setVisible(!shown.isEmpty());
-        if (shown.isEmpty()) {
-            // Nothing is left to come back to: forget the tile that used to be here.
-            if (Catalog.APPS.equals(row.kind)) lastAppId = null;
-            else lastInputId = null;
-        }
+        // Nothing is left to come back to: forget the tile that used to be here.
+        if (shown.isEmpty()) row.lastId = null;
         if (restore >= 0) {
             target.getChildAt(restore).requestFocus();
         } else if (keep != null && target.getChildCount() > 0) {
@@ -759,8 +812,10 @@ public final class Home extends Activity {
         io.execute(() -> {
             Catalog.art(getPackageManager(), it, cornerIcon);
             ui.post(() -> {
-                ViewGroup tiles = apps.tiles();
-                for (int i = 0; i < tiles.getChildCount(); i++) tiles.getChildAt(i).invalidate();
+                for (Row row : appRows()) {
+                    ViewGroup tiles = row.tiles();
+                    for (int i = 0; i < tiles.getChildCount(); i++) tiles.getChildAt(i).invalidate();
+                }
                 if (focusedItem() == it) focusBackground(it);
             });
         });
@@ -825,44 +880,32 @@ public final class Home extends Activity {
         }
     }
 
-    /**
-     * The tile of {@code kind} that was focused last, or null when there is none left.
-     */
-    private View rememberedTile(String kind) {
-        if (kind == null) return null;
-        String id = Catalog.APPS.equals(kind) ? lastAppId : lastInputId;
-        if (id == null) return null;
-        View v = findTile(kind, id);
-        if (v == null) {
-            // The tile is gone: the row was rebuilt without it.
-            if (Catalog.APPS.equals(kind)) lastAppId = null;
-            else lastInputId = null;
-        }
+    /** The tile of {@code row} that was focused last, or null when there is none left. */
+    private View rememberedTile(Row row) {
+        if (row == null || row.lastId == null) return null;
+        View v = findTile(row, row.lastId);
+        // The tile is gone: the row was rebuilt without it.
+        if (v == null) row.lastId = null;
         return v;
     }
 
-    /** The tile with this id in the row of {@code kind}, or null when there is none. */
-    private View findTile(String kind, String id) {
-        if (kind == null || id == null) return null;
-        Row row = Catalog.APPS.equals(kind) ? apps : inputs;
+    /** The tile with this id in {@code row}, or null when there is none. */
+    private static View findTile(Row row, String id) {
         ViewGroup tiles = row.tiles();
         for (int i = 0; i < tiles.getChildCount(); i++) {
             View v = tiles.getChildAt(i);
-            if (v instanceof Tile
-                    && ((Tile) v).kind.equals(kind)
-                    && ((Tile) v).item.id.equals(id)) {
-                return v;
-            }
+            if (v instanceof Tile && ((Tile) v).item.id.equals(id)) return v;
         }
         return null;
     }
 
     private void focusFirst() {
-        apps.scroll.scrollTo(0, 0);
-        inputs.scroll.scrollTo(0, 0);
-        View first = apps.tiles().getChildAt(0);
-        if (first == null) first = inputs.tiles().getChildAt(0);
-        landed = apps.tiles().getChildCount() > 0;
+        View first = null;
+        for (Row row : rows()) {
+            row.scroll.scrollTo(0, 0);
+            if (first == null) first = row.tiles().getChildAt(0);
+        }
+        landed = first != null && !inputs.holds(first);
         if (first == null) first = chips.get(0);
         first.requestFocus();
     }
@@ -988,13 +1031,13 @@ public final class Home extends Activity {
     private void menu(Tile t) {
         boolean app = Catalog.APPS.equals(t.kind);
         String[] actions = app
-                ? new String[] {"Move", "Rename", "Hide", "App info"}
+                ? new String[] {"Move", "Rename", "Category", "Hide", "App info"}
                 : new String[] {"Move", "Rename", "Hide"};
         new AlertDialog.Builder(this, Ui.DIALOG)
                 .setTitle(Catalog.label(cfg, t.item))
                 .setItems(actions, (d, which) -> {
-                    switch (which) {
-                        case 0:
+                    switch (actions[which]) {
+                        case "Move":
                             if (t.getParent() == null) break;
                             if (app && recentFor(t.kind) != null) {
                                 Toast.makeText(this, "App order is Recently used. Pick Your order "
@@ -1004,12 +1047,16 @@ public final class Home extends Activity {
                             moving = t;
                             t.setMoving(true);
                             break;
-                        case 1:
+                        case "Rename":
                             rename(t);
                             break;
-                        case 2:
+                        case "Category":
+                            category(t.item);
+                            break;
+                        case "Hide":
                             Catalog.setShown(cfg, t.kind, t.item, false);
-                            render(app ? apps : inputs);
+                            if (app) renderApps();
+                            else render(inputs);
                             Toast.makeText(this, "Hidden. Bring it back from Options.", Toast.LENGTH_SHORT).show();
                             break;
                         default:
@@ -1018,6 +1065,43 @@ public final class Home extends Activity {
                     }
                 })
                 .show();
+    }
+
+    /** Files an app under a category, or a new one; the first choice puts it back in Apps. */
+    private void category(Item it) {
+        List<String> names = Catalog.categories(cfg);
+        List<String> choices = new ArrayList<>();
+        choices.add("Apps (no category)");
+        choices.addAll(names);
+        choices.add("New category…");
+        String current = Catalog.category(cfg, it);
+        new AlertDialog.Builder(this, Ui.DIALOG)
+                .setTitle(Catalog.label(cfg, it))
+                .setSingleChoiceItems(choices.toArray(new CharSequence[0]),
+                        current == null ? 0 : names.indexOf(current) + 1, (d, which) -> {
+                            d.dismiss();
+                            if (which == 0) {
+                                file(it, null);
+                            } else if (which <= names.size()) {
+                                file(it, names.get(which - 1));
+                            } else {
+                                Ui.ask(this, "New category", "", raw -> {
+                                    String name = Catalog.categoryName(raw);
+                                    if (Catalog.addCategory(cfg, name) || names.contains(name)) file(it, name);
+                                });
+                            }
+                        })
+                .show();
+    }
+
+    /** Moves {@code it} to the row of {@code category} and follows it there with the focus. */
+    private void file(Item it, String category) {
+        Catalog.setCategory(cfg, it, category);
+        apply();
+        for (Row row : appRows()) {
+            View tile = Objects.equals(row.category, category) ? findTile(row, it.id) : null;
+            if (tile != null) tile.requestFocus();
+        }
     }
 
     private void rename(Tile t) {
