@@ -57,7 +57,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Move mode | ◀ ▶ moves the tile, ▲ ▼ moves it a line in the grid, any other key drops it |
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
-| HOME | the home screen, on the first tile |
+| HOME, or coming back from an app | the home screen, on the first tile |
 | On an input: Back | back to the home screen |
 | On an input: ☰ Menu | show the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |

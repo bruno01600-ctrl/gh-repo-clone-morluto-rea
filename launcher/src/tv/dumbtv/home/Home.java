@@ -63,8 +63,12 @@ public final class Home extends Activity {
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     private boolean resumed, landed, unlockOpened;
-    /** HOME arrived while the screen was not in front: land on the first tile once it is. */
-    private boolean toFirst;
+    /**
+     * Another app covered this screen, or HOME arrived while it was not in front: land on the
+     * first tile once it is back. Not after our own screens (Options, an input), which set
+     * {@link #ownScreen} so the focus stays where it was.
+     */
+    private boolean toFirst, ownScreen;
     private Row lastFocusedRow;
     private FrameLayout root;
     private LinearLayout column;
@@ -252,10 +256,9 @@ public final class Home extends Activity {
         if (cfg.version() != applied) apply();
         else background();
         refreshRecent();
-        if (toFirst) {
-            toFirst = false;
-            focusFirst();
-        }
+        if (toFirst) focusFirst();
+        toFirst = false;
+        ownScreen = false;
         IntentFilter f = new IntentFilter(Intent.ACTION_TIME_TICK);
         f.addAction(Intent.ACTION_TIME_CHANGED);
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -266,6 +269,23 @@ public final class Home extends Activity {
     @Override
     public void onEnterAnimationComplete() {
         Guard.shown();
+    }
+
+    /**
+     * Fire OS brings this screen back after HOME without a new intent (Guard's launch only moves
+     * the task forward), so the way back to the first tile cannot rely on onNewIntent: any return
+     * from another app lands there, as on stock launchers.
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!ownScreen) toFirst = true;
+    }
+
+    /** Starts one of this app's own screens; coming back from it keeps the focus. */
+    private void openOwn(Intent i) {
+        ownScreen = true;
+        startActivity(i);
     }
 
     @Override
@@ -354,14 +374,14 @@ public final class Home extends Activity {
                 unlockOpened = false;
             } else if (!unlockOpened && e.getEventTime() - e.getDownTime() >= UNLOCK_MS) {
                 unlockOpened = true;
-                startActivity(new Intent(this, Options.class));
+                openOwn(new Intent(this, Options.class));
             }
             return true;
         }
         if (code == KeyEvent.KEYCODE_MENU) {
             View f = getCurrentFocus();
             if (f instanceof Tile) menu((Tile) f);
-            else startActivity(new Intent(this, Options.class));
+            else openOwn(new Intent(this, Options.class));
             return true;
         }
         return super.onKeyDown(code, e);
@@ -573,7 +593,7 @@ public final class Home extends Activity {
         under.leftMargin = dp(2);
         when.addView(meter, under);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
-        head.addView(chip("Options", v -> startActivity(new Intent(this, Options.class))));
+        head.addView(chip("Options", v -> openOwn(new Intent(this, Options.class))));
         head.addView(chip("Settings", v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
 
@@ -1024,7 +1044,7 @@ public final class Home extends Activity {
         // the HOME takeover's singleTask relaunch clears it. NEW_TASK | RESET_TASK_IF_NEEDED on an
         // activity of the task that is already in front only brings that task forward and starts
         // nothing (ActivityStarter.complyActivityFlags), so it is started plainly.
-        if (own != null) startActivity(own);
+        if (own != null) openOwn(own);
         else launch(new Intent(t.item.intent), null);
     }
 
