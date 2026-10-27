@@ -14,6 +14,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -130,7 +131,8 @@ final class Catalog {
 
     /** The user's categories, in row order. Each is a row of apps under the Apps row. */
     static List<String> categories(Config cfg) {
-        return cfg.list("categories");
+        // A name listed twice (a hand edit, an older categories.sh) still makes one row.
+        return new ArrayList<>(new LinkedHashSet<>(cfg.list("categories")));
     }
 
     /** The category {@code it} is filed under, or null for the Apps row. */
