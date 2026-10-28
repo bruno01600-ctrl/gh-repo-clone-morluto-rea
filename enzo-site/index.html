@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enzo, pirate de la différence</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Association Enzo, pirate de la différence (E.P.L.D.) : aider Enzo, enfant autiste du Beaujolais, à financer ses prises en charge.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout : une colonne étroite façon « carte au trésor » — liens d'abord (comme le Linktree), puis l'histoire, le coût, et comment aider. */
+:root {
+  --sea: #0f3d5c;        /* bleu marine du large */
+  --sea-2: #165277;
+  --sail: #f7f4ee;       /* voile */
+  --ink: #142533;
+  --muted: #4d6170;
+  --gold: #f2b632;       /* pièce d'or */
+  --gold-ink: #3a2a00;
+  --wave: #2a9d8f;       /* écume */
+  --line: #d9e1e6;
+  --card: #ffffff;
+  --bg: #eef3f5;
+  --font-display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sea: #0a2a40; --sea-2: #0f3a58; --sail: #e9eef1; --ink: #e6edf2; --muted: #a3b4c0;
+    --gold: #f5c04e; --gold-ink: #2b1f00; --wave: #48c1b2; --line: #26394a; --card: #11202d; --bg: #0b1823;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sea: #0a2a40; --sea-2: #0f3a58; --sail: #e9eef1; --ink: #e6edf2; --muted: #a3b4c0;
+  --gold: #f5c04e; --gold-ink: #2b1f00; --wave: #48c1b2; --line: #26394a; --card: #11202d; --bg: #0b1823;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 17px/1.6 var(--font-body);
+}
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.6rem; }
+p { margin: 0; }
+
+/* Haut de page */
+.hero { background: var(--sea); color: #fff; position: relative; overflow: hidden; }
+.hero .wrap { padding-block: 48px 72px; display: grid; justify-items: center; text-align: center; gap: 14px; }
+.badge {
+  width: 112px; height: 112px; border-radius: 50%; background: var(--gold); color: var(--gold-ink);
+  display: grid; place-items: center; border: 4px solid #fff; box-shadow: 0 8px 24px rgb(0 0 0 / .25);
+}
+.badge svg { width: 64px; height: 64px; }
+.hero h1 { font-size: clamp(2rem, 7vw, 2.8rem); }
+.hero h1 span { color: var(--gold); display: block; }
+.hero p { color: #d6e4ee; max-width: 32ch; }
+.tag { font: 600 .78rem/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.waves { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 40px; display: block; }
+.waves path { fill: var(--bg); }
+
+/* Liens (façon Linktree) */
+.links { margin-top: -28px; position: relative; display: grid; gap: 12px; }
+.link {
+  display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 12px 18px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  text-decoration: none; font-weight: 700; transition: transform .15s, border-color .15s;
+}
+.link:hover { transform: translateY(-2px); border-color: var(--wave); }
+.link .ico { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--bg); color: var(--wave); }
+.link .ico svg { width: 20px; height: 20px; }
+.link .txt { min-width: 0; flex: 1; }
+.link small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+.link.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.link.primary .ico { background: rgb(255 255 255 / .45); color: var(--gold-ink); }
+.link.primary small { color: var(--gold-ink); opacity: .8; }
+.share { justify-self: center; background: none; border: 0; color: var(--muted); font: inherit; font-size: .9rem; cursor: pointer; text-decoration: underline; padding: 6px; }
+
+section { padding-block: 44px 0; }
+section > .wrap { display: grid; gap: 14px; }
+.lead { color: var(--muted); }
+
+/* Le coût */
+.cost { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cost div { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 4px; }
+.cost b { font: 600 1.9rem/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--sea-2); }
+:root[data-theme="dark"] .cost b { color: var(--gold); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cost b { color: var(--gold); } }
+.cost span { color: var(--muted); font-size: .92rem; }
+.note { font-size: .9rem; color: var(--muted); border-left: 3px solid var(--wave); padding-left: 12px; }
+
+/* Simulateur de don */
+.sim { background: var(--sea); color: #fff; border-radius: var(--r); padding: 20px; display: grid; gap: 14px; }
+.sim label { font-weight: 700; }
+.amounts { display: flex; flex-wrap: wrap; gap: 8px; }
+.amounts button {
+  font: 700 1rem var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  border: 2px solid rgb(255 255 255 / .35); background: transparent; color: #fff;
+}
+.amounts button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.sim input { width: 100%; accent-color: var(--gold); }
+.sim output { font-size: 1.05rem; color: #d6e4ee; }
+.sim output strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* Comment aider */
+.ways { display: grid; gap: 12px; }
+.way { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 6px; }
+.way h3 { font-size: 1.2rem; }
+.way p { color: var(--muted); }
+.price { font: 600 1rem var(--font-display); color: var(--wave); }
+
+footer { padding-block: 48px 32px; text-align: center; color: var(--muted); font-size: .88rem; }
+footer .wrap { display: grid; gap: 6px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: .9rem; }
+@media (max-width: 420px) { .cost { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge" aria-hidden="true">
+      <!-- Symbole infini de la neurodiversité, en drapeau pirate -->
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+        <path d="M32 32c-6-8-11-12-17-12a12 12 0 0 0 0 24c6 0 11-4 17-12s11-12 17-12a12 12 0 0 1 0 24c-6 0-11-4-17-12z"/>
+      </svg>
+    </div>
+    <span class="tag">Association E.P.L.D. · Beaujolais</span>
+    <h1>Enzo, <span>pirate de la différence</span></h1>
+    <p>Enzo est autiste. Ses parents ont créé cette association pour financer les prises en charge dont il a besoin pour grandir.</p>
+  </div>
+  <svg class="waves" viewBox="0 0 1200 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20c100 0 100-16 200-16s100 16 200 16 100-16 200-16 100 16 200 16 100-16 200-16 100 16 200 16v20H0z"/></svg>
+</header>
+
+<main>
+  <div class="wrap">
+    <nav class="links" id="links" aria-label="Liens"></nav>
+  </div>
+
+  <section id="enzo">
+    <div class="wrap">
+      <h2>L'histoire d'Enzo</h2>
+      <p>Enzo vit dans le Beaujolais, près de Villefranche-sur-Saône. Il est atteint de troubles du spectre de l'autisme. Les accompagnements qui l'aident à progresser coûtent cher, et ses parents ne peuvent pas les financer seuls.</p>
+      <p>Pour cela, ils ont fondé l'association <strong>« Enzo, pirate de la différence »</strong>. Chaque adhésion, chaque don et chaque participation à un événement sert à payer ses thérapies.</p>
+    </div>
+  </section>
+
+  <section id="cout">
+    <div class="wrap">
+      <h2>Ce que coûte sa prise en charge</h2>
+      <div class="cost">
+        <div><b>10 000 €</b><span>par an au minimum</span></div>
+        <div><b>35 000 €</b><span>par an pour une prise en charge optimale</span></div>
+      </div>
+      <p class="note">Ces soins ne sont remboursés ni par la Sécurité sociale, ni par les mutuelles.</p>
+
+      <div class="sim" role="group" aria-labelledby="sim-title">
+        <label id="sim-title" for="montant">Ce que représente votre don</label>
+        <div class="amounts" id="amounts">
+          <button type="button" data-v="10">10 €</button>
+          <button type="button" data-v="20">20 €</button>
+          <button type="button" data-v="50" aria-pressed="true">50 €</button>
+          <button type="button" data-v="100">100 €</button>
+        </div>
+        <input type="range" id="montant" min="5" max="500" step="5" value="50">
+        <output id="resultat" for="montant" aria-live="polite"></output>
+      </div>
+    </div>
+  </section>
+
+  <section id="aider">
+    <div class="wrap">
+      <h2>Comment aider Enzo</h2>
+      <div class="ways">
+        <article class="way">
+          <span class="price">10 € par an</span>
+          <h3>Adhérer à l'association</h3>
+          <p>Devenir membre, c'est soutenir l'association toute l'année et être tenu au courant de ses actions.</p>
+        </article>
+        <article class="way">
+          <span class="price">Montant libre</span>
+          <h3>Faire un don en ligne</h3>
+          <p>Les dons se font par PayPal, depuis la page « Faire un don » du site de l'association.</p>
+        </article>
+        <article class="way">
+          <span class="price">Par courrier</span>
+          <h3>Envoyer un chèque</h3>
+          <p>Chèque à l'ordre de l'association, à envoyer à l'adresse indiquée sur la page « Faire un don ».</p>
+        </article>
+        <article class="way">
+          <span class="price">Gratuit</span>
+          <h3>Faire connaître l'histoire d'Enzo</h3>
+          <p>Partagez cette page autour de vous : plus l'histoire circule, plus Enzo a de chances d'être aidé.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>© <span id="annee"></span> Association « Enzo, pirate de la différence » (E.P.L.D.)</p>
+    <p>Merci à tous les moussaillons qui embarquent avec Enzo.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/*
+ * LIENS — à modifier ici, comme sur Linktree.
+ * Ajoutez vos liens (Facebook, Instagram, cagnotte, événements…) en copiant une ligne.
+ * icon : "don" | "web" | "info" | "facebook" | "instagram" | "mail" | "event"
+ * primary: true met le lien en avant (couleur or).
+ */
+const LIENS = [
+  { titre: "Faire un don", sous: "PayPal ou chèque", url: "http://www.enzopiratedeladifference.fr/faire-un-don", icon: "don", primary: true },
+  { titre: "Le site de l'association", sous: "enzopiratedeladifference.fr", url: "http://www.enzopiratedeladifference.fr/", icon: "web" },
+  { titre: "Le coût de l'autisme", sous: "Pourquoi Enzo a besoin de vous", url: "http://www.enzopiratedeladifference.fr/autisme/le-cout", icon: "info" },
+  // { titre: "Facebook", sous: "Suivez l'aventure", url: "https://www.facebook.com/…", icon: "facebook" },
+  // { titre: "Instagram", sous: "", url: "https://www.instagram.com/…", icon: "instagram" },
+];
+
+const ICONES = {
+  don: '<path d="M12 21s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 6.6 5.3 5.3 0 0 1 21.3 12C19 16.6 12 21 12 21z"/>',
+  web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>',
+  instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5v.01"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  event: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'
+};
+
+const nav = document.getElementById("links");
+nav.innerHTML = LIENS.map(l => `
+  <a class="link${l.primary ? " primary" : ""}" href="${l.url}" target="_blank" rel="noopener">
+    <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[l.icon] || ICONES.web}</svg></span>
+    <span class="txt">${l.titre}${l.sous ? `<small>${l.sous}</small>` : ""}</span>
+  </a>`).join("") + '<button type="button" class="share" id="share">Copier le lien de cette page</button>';
+
+// Partage
+const toast = document.getElementById("toast");
+function montrer(msg) { toast.textContent = msg; toast.hidden = false; clearTimeout(montrer.t); montrer.t = setTimeout(() => toast.hidden = true, 2200); }
+document.getElementById("share").addEventListener("click", () => {
+  const url = location.href.split("#")[0];
+  navigator.clipboard.writeText(url).then(() => montrer("Lien copié"), () => montrer(url));
+});
+
+// Simulateur : base = prise en charge optimale de 35 000 € par an
+const OPTIMAL = 35000; // estimation indicative
+const range = document.getElementById("montant"), out = document.getElementById("resultat"), boutons = document.querySelectorAll("#amounts button");
+function maj(v) {
+  range.value = v;
+  boutons.forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === +v)));
+  const jours = v / (OPTIMAL / 365);
+  const txt = jours >= 1 ? `${jours.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} jour${jours >= 2 ? "s" : ""}` : `${Math.round(jours * 24)} heures`;
+  out.innerHTML = `<strong>${(+v).toLocaleString("fr-FR")} €</strong> financent environ <strong>${txt}</strong> de prise en charge optimale pour Enzo.`;
+}
+boutons.forEach(b => b.addEventListener("click", () => maj(b.dataset.v)));
+range.addEventListener("input", () => maj(range.value));
+maj(50);
+
+document.getElementById("annee").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
