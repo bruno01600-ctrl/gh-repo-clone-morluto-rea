@@ -86,6 +86,14 @@ one pass: the active entries of `data/androidtv/packages.txt`, Private DNS (AdGu
 default, `DNS_HOST=` to change it), dumbtv home with `setupwraith` disabled before
 `launcherx`, and the wallpaper. `--undo` reverses it. Not yet run on a Chromecast.
 
+`scripts/stayawake.sh` stops a Google TV device (a Chromecast with Google TV, say) from
+going to sleep when nobody touches the remote, and from sending the TV to standby over
+HDMI-CEC when it does: `screen_off_timeout`, `sleep_timeout`, `attentive_timeout`,
+`stay_on_while_plugged_in` and `hdmi_control_auto_device_off_enabled`. It keeps the old
+values on the device and `--undo` puts them back. The same thing by hand: Settings →
+System → Power & Energy → set every timer to Never. If the TV still turns off, it is
+the TV's own eco or auto power off timer, in the TV's menu.
+
 `data/androidtv/packages.txt` has the first entries verified on real hardware (an
 onn 4K Pro and a Philips 24NA), and `catalog/devices/androidtv-*.yaml` records
 nine devices. No script applies them yet: `debloat.sh` refuses anything that is
