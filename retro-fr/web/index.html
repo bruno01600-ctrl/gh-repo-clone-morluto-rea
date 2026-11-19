@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111318">
+  <title>Rétro FR</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="barre">
+    <h1>Rétro FR</h1>
+    <button id="ajouter" class="principal">＋ Ajouter des jeux</button>
+    <input id="fichiers" type="file" multiple hidden>
+  </header>
+
+  <nav class="onglets">
+    <button data-onglet="biblio" class="actif">Ma bibliothèque</button>
+    <button data-onglet="gratuits">Jeux gratuits</button>
+    <button data-onglet="aide">Aide</button>
+  </nav>
+
+  <main>
+    <section id="biblio">
+      <input id="recherche" type="search" placeholder="Rechercher un jeu…" autocomplete="off">
+      <div id="filtres" class="filtres"></div>
+      <div id="liste" class="grille"></div>
+      <p id="vide" class="vide" hidden>
+        Aucun jeu pour l'instant.<br>
+        Touchez <b>＋ Ajouter des jeux</b> et choisissez vos fichiers de jeu
+        (copies de vos cartouches et CD, ou jeux gratuits).
+      </p>
+    </section>
+
+    <section id="gratuits" hidden>
+      <p>Jeux distribués gratuitement par leurs auteurs. Téléchargez-les depuis leur page,
+        puis ajoutez-les avec <b>＋ Ajouter des jeux</b>.</p>
+      <div id="liste-gratuits" class="cartes"></div>
+    </section>
+
+    <section id="aide" hidden>
+      <h2>Ajouter un jeu</h2>
+      <p>Touchez <b>＋ Ajouter des jeux</b> et choisissez un ou plusieurs fichiers.
+        La console est reconnue d'après l'extension (.sfc, .gba, .md…). Pour un fichier
+        .zip, .bin ou .iso, l'application vous demande de quelle console il s'agit.</p>
+      <p>Les jeux restent sur votre téléphone, dans l'application. Rien n'est envoyé sur Internet.</p>
+      <h2>Consoles et extensions</h2>
+      <div id="tableau-consoles"></div>
+      <h2>Pendant le jeu</h2>
+      <p>Une manette tactile s'affiche à l'écran. Une manette Bluetooth fonctionne aussi.
+        La barre du bas permet de sauvegarder et de charger une partie à tout moment
+        (icônes disquette), de couper le son et de passer en plein écran.</p>
+      <h2>PlayStation</h2>
+      <p>Préférez un fichier unique .pbp ou .chd. Un couple .cue + .bin peut être mis
+        dans un .zip, puis importé comme « PlayStation ».</p>
+      <h2>Où trouver des jeux légalement ?</h2>
+      <p>Avec un lecteur de cartouches (par exemple GB Operator, Retrode ou Sanni Cart
+        Reader), vous pouvez copier vos propres jeux. Beaucoup de jeux récents faits par
+        des passionnés sont aussi gratuits : voir l'onglet <b>Jeux gratuits</b>.</p>
+    </section>
+  </main>
+
+  <dialog id="choix-console">
+    <form method="dialog">
+      <h2>Quelle console ?</h2>
+      <p id="choix-fichier"></p>
+      <select id="choix-select"></select>
+      <div class="actions">
+        <button value="annuler">Ignorer ce fichier</button>
+        <button value="ok" class="principal">Ajouter</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="options-jeu">
+    <form method="dialog">
+      <h2 id="options-titre"></h2>
+      <label>Nom<input id="options-nom" type="text"></label>
+      <label>Console<select id="options-console"></select></label>
+      <div class="actions">
+        <button value="supprimer" class="danger">Supprimer</button>
+        <button value="annuler">Annuler</button>
+        <button value="ok" class="principal">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="message" class="message" hidden></div>
+
+  <script src="consoles.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

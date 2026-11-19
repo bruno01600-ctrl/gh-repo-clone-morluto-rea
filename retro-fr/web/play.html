@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Rétro FR — jeu</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #eee; font-family: system-ui, sans-serif; overflow: hidden; }
+    #retour { position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 8px; z-index: 10000;
+      background: #0008; color: #fff; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 15px; }
+    #jeu { width: 100vw; height: 100vh; height: 100dvh; }
+    #erreur { padding: 64px 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <button id="retour">‹ Bibliothèque</button>
+  <div id="jeu"></div>
+  <script src="consoles.js"></script>
+  <script src="db.js"></script>
+  <script>
+    document.getElementById("retour").onclick = () => { location.href = "index.html"; };
+
+    function erreur(texte) {
+      const p = document.createElement("p");
+      p.id = "erreur";
+      p.textContent = texte;
+      document.getElementById("jeu").replaceWith(p);
+    }
+
+    (async () => {
+      const id = new URLSearchParams(location.search).get("id");
+      const jeu = id && await Biblio.un(id);
+      if (!jeu) return erreur("Ce jeu n'est plus dans la bibliothèque.");
+      document.title = jeu.titre;
+      Biblio.modifier(jeu.id, { joue: Date.now() });
+
+      window.EJS_player = "#jeu";
+      window.EJS_core = jeu.console;
+      window.EJS_gameUrl = jeu.fichier;           // un Blob : le jeu ne quitte jamais le téléphone
+      window.EJS_gameName = jeu.titre;             // nom des sauvegardes
+      window.EJS_gameID = jeu.id;
+      window.EJS_pathtodata = "emulator/";
+      window.EJS_language = "af-FR";               // le français, sous ce code dans EmulatorJS
+      window.EJS_startOnLoaded = true;
+      window.EJS_color = "#ffb300";
+      window.EJS_backgroundColor = "#000";
+      window.EJS_DEBUG_XX = true;                  // le paquet npm ne contient que les sources non minifiées
+      window.EJS_Buttons = { netplay: false, cacheManager: false };
+      window.EJS_defaultOptions = { "save-state-location": "browser" };
+
+      const s = document.createElement("script");
+      s.src = "emulator/loader.js";
+      s.onerror = () => erreur("L'émulateur est introuvable. Lancez fetch-emulator.sh avant de compiler.");
+      document.body.append(s);
+    })();
+  </script>
+</body>
+</html>

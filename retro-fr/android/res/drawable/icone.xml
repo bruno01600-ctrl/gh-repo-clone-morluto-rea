@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Une manette stylisée sur fond rond sombre. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#111318" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <path android:fillColor="#FFB300"
+        android:pathData="M14,15h20a9,9 0,0 1,9 9v2a8,8 0,0 1,-14 5l-1.5,-2h-7l-1.5,2a8,8 0,0 1,-14 -5v-2a9,9 0,0 1,9 -9z" />
+    <path android:fillColor="#111318"
+        android:pathData="M13,20h3v3h3v3h-3v3h-3v-3h-3v-3h3z" />
+    <path android:fillColor="#111318" android:pathData="M33,20a2,2 0,1 1,0 4a2,2 0,1 1,0 -4z" />
+    <path android:fillColor="#111318" android:pathData="M37,24a2,2 0,1 1,0 4a2,2 0,1 1,0 -4z" />
+</vector>

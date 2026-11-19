@@ -1,0 +1,40 @@
+name: retro-fr
+
+on:
+  push:
+    paths:
+      - "retro-fr/**"
+      - ".github/workflows/retro-fr.yml"
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: sdk
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+      - name: emulateur (EmulatorJS et ses cœurs, depuis npm)
+        run: ./retro-fr/fetch-emulator.sh
+      - name: apk
+        env:
+          # Facultatif : une clé PKCS12 en base64 pour que chaque version s'installe par-dessus la précédente.
+          KEYSTORE_B64: ${{ secrets.RETROFR_KEYSTORE_B64 }}
+          KEYPASS: ${{ secrets.RETROFR_KEYPASS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/retrofr.p12"
+            export RETROFR_KEYSTORE="$RUNNER_TEMP/retrofr.p12" RETROFR_KEYPASS="${KEYPASS:-retrofr}"
+          fi
+          ./retro-fr/android/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retro-fr-apk
+          path: retro-fr/android/build/retro-fr.apk
